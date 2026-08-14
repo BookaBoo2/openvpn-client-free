@@ -1,0 +1,26 @@
+name: vpn_android
+description: Android OpenVPN plugin with multi-profile and per-app whitelist/blacklist.
+version: 0.1.0
+homepage: https://github.com/ovpnclient/ovpn_client
+publish_to: "none"
+
+environment:
+  sdk: ^3.12.2
+  flutter: ">=3.3.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.ovpnclient.vpn_android
+        pluginClass: VpnAndroidPlugin
