@@ -13,7 +13,10 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry
+import android.os.Handler
+import android.os.Looper
 import java.util.UUID
+import java.util.concurrent.Executors
 
 /** VpnAndroidPlugin — profiles, per-app VPN, OpenVPN connect via openvpn_library. */
 class VpnAndroidPlugin :
@@ -37,6 +40,8 @@ class VpnAndroidPlugin :
     private var pendingConnectResult: Result? = null
     private var pendingPermissionResult: Result? = null
     private var pendingProfileId: String? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val ioExecutor = Executors.newSingleThreadExecutor()
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         appContext = binding.applicationContext
@@ -182,7 +187,15 @@ class VpnAndroidPlugin :
                 }
                 "listInstalledApps" -> {
                     val icons = call.argument<Boolean>("includeIcons") ?: false
-                    result.success(AppListHelper.listLaunchableApps(appContext, icons))
+                    runInBackground(result) {
+                        AppListHelper.listLaunchableApps(appContext, icons)
+                    }
+                }
+                "getAppsByPackages" -> {
+                    val packages = call.argument<List<String>>("packageNames") ?: emptyList()
+                    runInBackground(result) {
+                        AppListHelper.appsForPackages(appContext, packages)
+                    }
                 }
                 "connect" -> connect(call.argument("profileId"), result)
                 "disconnect" -> {
@@ -325,6 +338,22 @@ class VpnAndroidPlugin :
         activityBinding?.removeActivityResultListener(this)
         activity = null
         activityBinding = null
+    }
+
+    private fun runInBackground(
+        result: Result,
+        block: () -> Any?,
+    ) {
+        ioExecutor.execute {
+            try {
+                val value = block()
+                mainHandler.post { result.success(value) }
+            } catch (e: Exception) {
+                mainHandler.post {
+                    result.error("error", e.message, e.stackTraceToString())
+                }
+            }
+        }
     }
 
     companion object {

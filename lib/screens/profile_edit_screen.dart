@@ -25,6 +25,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   VpnProfile? _profile;
   bool _loading = true;
   bool _saving = false;
+  Map<String, InstalledApp> _appsByPackage = {};
 
   @override
   void initState() {
@@ -46,6 +47,20 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       }
       _loading = false;
     });
+    await _loadSelectedApps();
+  }
+
+  Future<void> _loadSelectedApps() async {
+    if (_packages.isEmpty) return;
+    try {
+      final apps = await VpnAndroid.instance.getAppsByPackages(_packages);
+      if (!mounted) return;
+      setState(() {
+        _appsByPackage = {for (final a in apps) a.packageName: a};
+      });
+    } catch (_) {
+      // Labels will fall back to a placeholder until picker is opened.
+    }
   }
 
   @override
@@ -97,11 +112,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         body: const Center(child: Text('Профиль не найден')),
       );
     }
-
-    final appsAsync = ref.watch(installedAppsProvider(true));
-    final appsByPackage = appsAsync.valueOrNull == null
-        ? <String, InstalledApp>{}
-        : {for (final a in appsAsync.valueOrNull!) a.packageName: a};
 
     return Scaffold(
       appBar: AppBar(
@@ -194,6 +204,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 );
                 if (result != null) {
                   setState(() => _packages = result);
+                  _loadSelectedApps();
                 }
               },
             ),
@@ -202,7 +213,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ..._packages.map(
                 (pkg) => _SelectedAppTile(
                   packageName: pkg,
-                  app: appsByPackage[pkg],
+                  app: _appsByPackage[pkg],
                   onRemove: () => setState(() => _packages.remove(pkg)),
                 ),
               ),
@@ -227,7 +238,7 @@ class _SelectedAppTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = app?.label ?? 'Неизвестное приложение';
+    final label = app?.label ?? packageName;
     Widget leading;
     if (app?.iconBase64 != null) {
       try {

@@ -156,6 +156,6 @@ class LogsNotifier extends AsyncNotifier<List<String>> {
 }
 
 final installedAppsProvider =
-    FutureProvider.family<List<InstalledApp>, bool>((ref, includeIcons) {
-  return VpnAndroid.instance.listInstalledApps(includeIcons: includeIcons);
+    FutureProvider.autoDispose<List<InstalledApp>>((ref) {
+  return VpnAndroid.instance.listInstalledApps(includeIcons: true);
 });

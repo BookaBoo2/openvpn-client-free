@@ -13,6 +13,7 @@
         android:label="OpenVPN Client Free"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         tools:replace="android:label">
 
         <activity

@@ -33,7 +33,7 @@ class _AppPickerScreenState extends ConsumerState<AppPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appsAsync = ref.watch(installedAppsProvider(true));
+    final appsAsync = ref.watch(installedAppsProvider);
 
     return Scaffold(
       appBar: AppBar(

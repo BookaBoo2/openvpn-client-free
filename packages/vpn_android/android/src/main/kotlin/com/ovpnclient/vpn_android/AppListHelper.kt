@@ -54,6 +54,33 @@ object AppListHelper {
         return result.sortedBy { (it["label"] as String).lowercase() }
     }
 
+    fun appsForPackages(
+        context: Context,
+        packageNames: List<String>,
+    ): List<Map<String, Any?>> {
+        val pm = context.packageManager
+        return packageNames.mapNotNull { pkg ->
+            val appInfo =
+                try {
+                    pm.getApplicationInfo(pkg, 0)
+                } catch (_: PackageManager.NameNotFoundException) {
+                    return@mapNotNull null
+                }
+            val map =
+                mutableMapOf<String, Any?>(
+                    "packageName" to pkg,
+                    "label" to pm.getApplicationLabel(appInfo).toString(),
+                    "systemApp" to ((appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0),
+                )
+            try {
+                map["iconBase64"] = drawableToBase64(pm.getApplicationIcon(appInfo))
+            } catch (_: Exception) {
+                map["iconBase64"] = null
+            }
+            map
+        }
+    }
+
     private fun drawableToBase64(drawable: Drawable): String {
         val bitmap =
             when (drawable) {
@@ -68,9 +95,9 @@ object AppListHelper {
                     bmp
                 }
             }
-        val scaled = Bitmap.createScaledBitmap(bitmap, 96, 96, true)
+        val scaled = Bitmap.createScaledBitmap(bitmap, 48, 48, true)
         val out = ByteArrayOutputStream()
-        scaled.compress(Bitmap.CompressFormat.PNG, 85, out)
+        scaled.compress(Bitmap.CompressFormat.PNG, 80, out)
         return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP)
     }
 }

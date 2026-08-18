@@ -128,6 +128,17 @@ class VpnAndroid {
         .toList();
   }
 
+  Future<List<InstalledApp>> getAppsByPackages(List<String> packageNames) async {
+    if (packageNames.isEmpty) return const [];
+    final raw = await _channel.invokeMethod<List<dynamic>>(
+      'getAppsByPackages',
+      {'packageNames': packageNames},
+    );
+    return (raw ?? const [])
+        .map((e) => InstalledApp.fromMap(Map<dynamic, dynamic>.from(e as Map)))
+        .toList();
+  }
+
   Future<VpnStatusSnapshot> connect({String? profileId}) async {
     final raw = await _channel.invokeMethod<Map<dynamic, dynamic>>(
       'connect',
